@@ -20,7 +20,11 @@ async function connectDB() {
     process.exit(1);
   }
   try {
-    const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    const client = new MongoClient(uri, {
+      tls: true, // Explicitly enable TLS
+      serverSelectionTimeoutMS: 5000, // Timeout to catch issues faster
+      heartbeatFrequencyMS: 10000,
+    });
     await client.connect();
     db = client.db('attorneys'); // Use the 'attorneys' database from your URI
     console.log('MongoDB connected');
@@ -31,6 +35,11 @@ async function connectDB() {
 }
 
 connectDB().catch(console.error);
+
+// Root route
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
 
 app.set('view engine', 'ejs');
 app.use('/uploads', express.static('public/uploads')); // Serves public/css/styles.css, public/uploads/, etc.
