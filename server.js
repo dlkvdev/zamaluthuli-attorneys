@@ -36,7 +36,7 @@ async function connectDB() {
 }
 
 app.get('/login', (req, res) => {
-  res.render('login'); 
+  res.render('login', { error: null }); // Pass error as null by default
 });
 
 connectDB().catch(console.error);
