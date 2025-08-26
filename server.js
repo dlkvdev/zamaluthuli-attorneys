@@ -35,6 +35,10 @@ async function connectDB() {
   }
 }
 
+app.get('/login', (req, res) => {
+  res.render('login'); 
+});
+
 connectDB().catch(console.error);
 
 // Root route
