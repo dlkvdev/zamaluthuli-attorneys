@@ -39,11 +39,26 @@ app.get('/login', (req, res) => {
   res.render('login', { error: null }); // Pass error as null by default
 });
 
+app.post('/login',
+  passport.authenticate('local', {
+    successRedirect: '/admin/practice-areas', // Redirect to admin dashboard on success
+    failureRedirect: '/login', // Back to login on failure
+    failureFlash: true // Requires connect-flash
+  })
+);
+
+app.get('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) return next(err);
+    res.redirect('/');
+  });
+});
+
 connectDB().catch(console.error);
 
-// Root route
+// Root route (public homepage)
 app.get('/', (req, res) => {
-  res.redirect('/login');
+  res.render('index'); // Render public homepage
 });
 
 app.set('view engine', 'ejs');
