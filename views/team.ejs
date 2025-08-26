@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Team</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+  <%- include('partials/header') %>
+  <div class="container mt-5">
+    <h1>Our Team</h1>
+    <% if (teamMembers.length > 0) { %>
+      <div class="row">
+        <% teamMembers.forEach(member => { %>
+          <div class="col-md-4 mb-4">
+            <div class="card">
+              <% if (member.photoPath) { %>
+                <img src="<%= member.photoPath %>?t=<%= Date.now() %>" class="card-img-top" alt="<%= member.name %>">
+              <% } %>
+              <div class="card-body">
+                <h5 class="card-title"><%= member.name %></h5>
+                <p class="card-text">Position: <%= member.position %></p>
+                <p class="card-text"><%= member.bio %></p>
+                <a href="/team/<%= member.id %>" class="btn btn-primary">View Details</a>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p>No team members available.</p>
+    <% } %>
+  </div>
+    <!-- Footer -->
+  <%- include('partials/footer') %>
+</body>
+</html>

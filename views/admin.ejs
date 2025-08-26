@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+  <main class="container my-5">
+    <h2>Admin Panel</h2>
+    <h3>Manage Attorneys</h3>
+    <form action="/admin/attorney" method="POST" enctype="multipart/form-data" class="mb-5">
+      <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+      </div>
+      <div class="mb-3">
+        <label for="position" class="form-label">Position</label>
+        <input type="text" class="form-control" id="position" name="position" required>
+      </div>
+      <div class="mb-3">
+        <label for="qualifications" class="form-label">Qualifications</label>
+        <input type="text" class="form-control" id="qualifications" name="qualifications" required>
+      </div>
+      <div class="mb-3">
+        <label for="bio" class="form-label">Biography</label>
+        <textarea class="form-control" id="bio" name="bio" rows="5" required></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+      <div class="mb-3">
+        <label for="contact_number" class="form-label">Contact Number</label>
+        <input type="text" class="form-control" id="contact_number" name="contact_number" required>
+      </div>
+      <div class="mb-3">
+        <label for="attorneyPhoto" class="form-label">Photo</label>
+        <input type="file" class="form-control" id="attorneyPhoto" name="attorneyPhoto">
+      </div>
+      <button type="submit" class="btn btn-primary">Add Attorney</button>
+    </form>
+    <h4>Current Attorneys</h4>
+    <ul class="list-group mb-5">
+      <% attorneys.forEach(attorney => { %>
+        <li class="list-group-item">
+          <%= attorney.name %> (<%= attorney.position %>)
+          <form action="/admin/attorney/<%= attorney._id %>/delete" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </li>
+      <% }) %>
+    </ul>
+
+    <h3>Manage Practice Areas</h3>
+    <form action="/admin/practice-area" method="POST" class="mb-5">
+      <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+      </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Add Practice Area</button>
+    </form>
+    <h4>Current Practice Areas</h4>
+    <ul class="list-group mb-5">
+      <% practiceAreas.forEach(area => { %>
+        <li class="list-group-item">
+          <%= area.title %>
+          <form action="/admin/practice-area/<%= area._id %>/delete" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </li>
+      <% }) %>
+    </ul>
+
+    <h3>Manage Newsletters</h3>
+    <form action="/admin/newsletter" method="POST" enctype="multipart/form-data" class="mb-5">
+      <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+      </div>
+      <div class="mb-3">
+        <label for="newsletterFile" class="form-label">PDF File</label>
+        <input type="file" class="form-control" id="newsletterFile" name="newsletterFile" accept=".pdf">
+      </div>
+      <button type="submit" class="btn btn-primary">Add Newsletter</button>
+    </form>
+    <h4>Current Newsletters</h4>
+    <ul class="list-group mb-5">
+      <% newsletters.forEach(newsletter => { %>
+        <li class="list-group-item">
+          <%= newsletter.title %>
+          <form action="/admin/newsletter/<%= newsletter._id %>/delete" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </li>
+      <% }) %>
+    </ul>
+
+    <h3>Manage Events</h3>
+    <form action="/admin/event" method="POST" enctype="multipart/form-data" class="mb-5">
+      <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+      </div>
+      <div class="mb-3">
+        <label for="event_date" class="form-label">Event Date</label>
+        <input type="date" class="form-control" id="event_date" name="event_date" required>
+      </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="eventImage" class="form-label">Cover Photo</label>
+        <input type="file" class="form-control" id="eventImage" name="eventImage">
+      </div>
+      <div class="mb-3">
+        <label for="eventImages" class="form-label">Additional Photos</label>
+        <input type="file" class="form-control" id="eventImages" name="eventImages" multiple>
+      </div>
+      <div class="mb-3">
+        <label for="image_captions" class="form-label">Photo Captions (comma-separated)</label>
+        <input type="text" class="form-control" id="image_captions" name="image_captions">
+      </div>
+      <button type="submit" class="btn btn-primary">Add Event</button>
+    </form>
+    <h4>Current Events</h4>
+    <ul class="list-group mb-5">
+      <% events.forEach(event => { %>
+        <li class="list-group-item">
+          <%= event.title %>
+          <form action="/admin/event/<%= event._id %>/delete" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </li>
+      <% }) %>
+    </ul>
+  </main>
+  <%- include('partials/footer') %>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

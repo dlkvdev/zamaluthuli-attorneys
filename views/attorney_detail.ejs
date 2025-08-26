@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attorney Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <% if (attorney) { %>
+      <h1><%= attorney.name %></h1>
+      <div class="row">
+        <div class="col-md-4">
+          <% if (attorney.photoPath) { %>
+            <img src="<%= attorney.photoPath %>?t=<%= Date.now() %>" class="img-fluid mb-3" alt="<%= attorney.name %>">
+          <% } %>
+        </div>
+        <div class="col-md-8">
+          <p><strong>Position:</strong> <%= attorney.position %></p>
+          <p><strong>Biography:</strong> <%= attorney.bio || 'No biography provided' %></p>
+          <a href="mailto:contact@example.com" class="btn btn-primary">Contact This Attorney</a>
+        </div>
+      </div>
+    <% } else { %>
+      <h1>Attorney Not Found</h1>
+      <p>Attorney not found.</p>
+    <% } %>
+    <a href="/team" class="btn btn-secondary mt-3">Back to Team</a>
+  </div>
+</body>
+</html>

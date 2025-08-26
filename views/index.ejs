@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zama Luthuli Attorneys</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <%- include('partials/header') %>
+
+  <!-- Carousel -->
+  <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      <div class="carousel-item active">
+        <img src="/MEDIA/Carousel/hero1.jpg" class="d-block w-100" alt="Welcome to Zama Luthuli Attorneys">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Welcome to Zama Luthuli Attorneys</h5>
+          <p>Expert legal services for your needs.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero2.webp" class="d-block w-100" alt="Trusted Legal Expertise">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Trusted Legal Expertise</h5>
+          <p>Delivering justice with integrity.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero3.jpg" class="d-block w-100" alt="Our Commitment">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Our Commitment</h5>
+          <p>Providing exceptional legal support.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero4.jpg" class="d-block w-100" alt="Your Legal Partner">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Your Legal Partner</h5>
+          <p>Guiding you through every step.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero5.webp" class="d-block w-100" alt="Expertise You Can Trust">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Expertise You Can Trust</h5>
+          <p>Comprehensive legal solutions.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero6.jpeg" class="d-block w-100" alt="Dedicated Service">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Dedicated Service</h5>
+          <p>Focused on your success.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero7.webp" class="d-block w-100" alt="Justice Delivered">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Justice Delivered</h5>
+          <p>With integrity and care.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero8.jpg" class="d-block w-100" alt="Legal Excellence">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Legal Excellence</h5>
+          <p>Tailored to your needs.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero11.webp" class="d-block w-100" alt="Your Trusted Advisors">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Your Trusted Advisors</h5>
+          <p>Here for every challenge.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero12.jpg" class="d-block w-100" alt="Unwavering Support">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Unwavering Support</h5>
+          <p>Standing by your side.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero13.jpeg" class="d-block w-100" alt="Proven Results">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Proven Results</h5>
+          <p>Delivering successful outcomes.</p>
+        </div>
+      </div>
+      <div class="carousel-item">
+        <img src="/MEDIA/Carousel/hero14.jpeg" class="d-block w-100" alt="Client-Centered Approach">
+        <div class="carousel-caption d-none d-md-block">
+          <h5>Client-Centered Approach</h5>
+          <p>Your goals, our mission.</p>
+        </div>
+      </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <h2>About Us</h2>
+    <p>Zama Luthuli Attorneys is a premier law firm dedicated to providing top-tier legal services. With a team of experienced professionals, we offer personalized solutions to meet your legal needs, ensuring justice and integrity in every case.</p>
+    
+    <h2>Our Mission</h2>
+    <p>Our mission is to deliver exceptional legal representation with a client-centered approach. We strive to uphold the highest standards of professionalism, ensuring that every client receives tailored advice and robust support.</p>
+    
+    <h2>Public Notices</h2>
+    <% if (notices && notices.length > 0) { %>
+      <div class="notice-list">
+        <% notices.forEach(notice => { %>
+          <div class="notice-card">
+            <h3><%= notice.title %></h3>
+            <p><strong>Date:</strong> <%= new Date(notice.date).toLocaleDateString() %></p>
+            <p><%= notice.content %></p>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <p>No notices available at this time.</p>
+    <% } %>
+  </div>
+
+  <!-- Footer -->
+  <%- include('partials/footer') %>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

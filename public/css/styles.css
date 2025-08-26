@@ -1,0 +1,223 @@
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.logo-img {
+  max-height: 50px;
+  width: auto;
+  margin-right: 10px;
+}
+
+.navbar-brand span {
+  color: whitesmoke;
+  font-size: 1.5rem;
+}
+
+@media (max-width: 576px) {
+  .logo-img {
+    margin: 0 auto;
+    padding: 10px;
+  }
+  .navbar-brand {
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+  }
+  .navbar-brand span {
+    font-size: 1.2rem;
+  }
+}
+
+.carousel.slide {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.carousel-inner {
+  max-height: 1600px;
+  overflow: hidden;
+}
+
+.carousel.slide .carousel-item img {
+  max-height: 400px;
+  width: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .carousel-inner {
+    max-height: 300px;
+  }
+  .carousel.slide .carousel-item img {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 576px) {
+  .carousel-inner {
+    max-height: 180px;
+  }
+  .carousel.slide .carousel-item img {
+    max-height: 180px;
+  }
+}
+
+.carousel-caption {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.text-whitesmoke {
+  color: whitesmoke;
+}
+
+.text-whitesmoke:hover {
+  color: #d3d3d3;
+}
+
+footer {
+  background-color: #000;
+}
+
+footer a {
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+.contact-section iframe {
+  border-radius: 5px;
+}
+
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+}
+
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+}
+
+.event-detail-container {
+  background: #333;
+}
+
+/* Styles for notices */
+.notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.notice-card {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.notice-card h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.notice-card p {
+  margin: 5px 0;
+  color: #555;
+}
+
+/* Styles for newsletters */
+.newsletter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.newsletter-card {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.newsletter-card h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.newsletter-card p {
+  margin: 5px 0;
+  color: #555;
+}
+
+/* Styles for team */
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.team-card {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.team-card h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.team-card p {
+  margin: 5px 0;
+  color: #555;
+}
+
+/* Styles for login and admin forms */
+.login-form {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Additional styles for admin notices */
+.card-header {
+  background: #333;
+  color: whitesmoke;
+  font-weight: bold;
+}
+
+.alert-warning {
+  background: #fff3cd;
+  color: #664d03;
+  border: 1px solid #ffecb5;
+  border-radius: 5px;
+}

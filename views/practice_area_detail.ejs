@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Practice Area Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+  <%- include('partials/header') %>
+  <div class="container mt-5">
+    <% if (practiceArea) { %>
+      <h1><%= practiceArea.title %></h1>
+      <% if (practiceArea.imagePath) { %>
+        <img src="<%= practiceArea.imagePath %>?t=<%= Date.now() %>" class="img-fluid mb-3" alt="<%= practiceArea.title %>">
+      <% } %>
+      <p><strong>Description:</strong> <%= practiceArea.description || 'No description provided' %></p>
+    <% } else { %>
+      <h1>Practice Area Not Found</h1>
+      <p>The requested practice area could not be found.</p>
+    <% } %>
+    <a href="/practice-areas" class="btn btn-secondary">Back to Practice Areas</a>
+      <!-- Footer -->
+  <%- include('partials/footer') %>
+  </div>
+</body>
+</html>
