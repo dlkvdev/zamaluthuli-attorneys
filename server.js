@@ -22,11 +22,12 @@ async function connectDB() {
   try {
     const client = new MongoClient(uri, {
       tls: true, // Explicitly enable TLS
-      serverSelectionTimeoutMS: 5000, // Timeout to catch issues faster
+      tlsInsecure: false, // Ensure strict TLS (disable if testing, but not recommended)
+      serverSelectionTimeoutMS: 5000, // Faster timeout for errors
       heartbeatFrequencyMS: 10000,
     });
     await client.connect();
-    db = client.db('attorneys'); // Use the 'attorneys' database from your URI
+    db = client.db('attorneys');
     console.log('MongoDB connected');
   } catch (err) {
     console.error('Failed to connect to MongoDB:', err);
