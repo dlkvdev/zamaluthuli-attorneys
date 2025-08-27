@@ -1,4 +1,5 @@
 
+require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const sanitizeHtml = require('sanitize-html');
@@ -11,6 +12,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 const app = express();
+
 
 let db;
 
