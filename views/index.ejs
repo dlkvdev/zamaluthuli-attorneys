@@ -111,29 +111,32 @@
 
   <!-- Main Content -->
   <div class="container">
-    <h2>About Us</h2>
-    <p>Zama Luthuli Attorneys is a premier law firm dedicated to providing top-tier legal services. With a team of experienced professionals, we offer personalized solutions to meet your legal needs, ensuring justice and integrity in every case.</p>
-    
+    <h2>Our History</h2>
+    <p>We are law firm dedicated to deliver excellent legal solutions to everyone with due diligence and respect. We offer a wide range of legal services as requested by clients. We have a highly skilled team fully equipped to negotiate and litigate complex legal matters.
+
+    Our Founding Director is proficient in human rights law and has earned an excellent reputation for dispute resolution both in the High and Magistrates Courts, and before tribunals. It is our culture to always put the needs of our clients first and to provide the highest quality legal services</p>
+        
     <h2>Our Mission</h2>
     <p>Our mission is to deliver exceptional legal representation with a client-centered approach. We strive to uphold the highest standards of professionalism, ensuring that every client receives tailored advice and robust support.</p>
     
     <h2>Public Notices</h2>
-      <% if (error) { %>
-        <div class="alert alert-warning"><%= error %></div>
-      <% } %>
-      <% if (notices && notices.length > 0) { %>
-        <div class="notice-list">
-          <% notices.forEach(notice => { %>
-            <div class="notice-card">
-              <h3><%= notice.title %></h3>
-              <p>Date: <%= notice.date || 'No date provided' %></p>
-              <p><%= notice.content %></p>
-            </div>
-          <% }) %>
-        </div>
-      <% } else { %>
-        <p>No notices available at this time.</p>
-      <% }
+    <% if (error) { %>
+      <div class="alert alert-warning"><%= error %></div>
+    <% } %>
+    <% if (notices && notices.length > 0) { %>
+      <div class="notice-list">
+        <% notices.forEach(notice => { %>
+          <div class="notice-card">
+            <h3><%= notice.title %></h3>
+            <p>Date: <%= notice.date || 'No date provided' %></p>
+            <p><%= notice.content %></p>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p>No notices available at this time.</p>
+    <% } %>
+  </div>
 
   <!-- Footer -->
   <%- include('partials/footer') %>
