@@ -36,12 +36,12 @@ body {
 }
 
 .carousel-inner {
-  max-height: 1600px;
+  max-height: 200px;
   overflow: hidden;
 }
 
 .carousel.slide .carousel-item img {
-  max-height: 400px;
+  max-height: 200px;
   width: 100%;
   object-fit: cover;
 }
