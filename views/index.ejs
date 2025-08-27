@@ -118,20 +118,22 @@
     <p>Our mission is to deliver exceptional legal representation with a client-centered approach. We strive to uphold the highest standards of professionalism, ensuring that every client receives tailored advice and robust support.</p>
     
     <h2>Public Notices</h2>
-    <% if (notices && notices.length > 0) { %>
-      <div class="notice-list">
-        <% notices.forEach(notice => { %>
-          <div class="notice-card">
-            <h3><%= notice.title %></h3>
-            <p><strong>Date:</strong> <%= new Date(notice.date).toLocaleDateString() %></p>
-            <p><%= notice.content %></p>
-          </div>
-        <% }); %>
-      </div>
-    <% } else { %>
-      <p>No notices available at this time.</p>
-    <% } %>
-  </div>
+      <% if (error) { %>
+        <div class="alert alert-warning"><%= error %></div>
+      <% } %>
+      <% if (notices && notices.length > 0) { %>
+        <div class="notice-list">
+          <% notices.forEach(notice => { %>
+            <div class="notice-card">
+              <h3><%= notice.title %></h3>
+              <p>Date: <%= notice.date || 'No date provided' %></p>
+              <p><%= notice.content %></p>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p>No notices available at this time.</p>
+      <% }
 
   <!-- Footer -->
   <%- include('partials/footer') %>

@@ -10,6 +10,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 const app = express();
 
+
 let db;
 
 async function connectDB() {
@@ -57,9 +58,17 @@ app.get('/logout', (req, res) => {
 connectDB().catch(console.error);
 
 // Root route (public homepage)
-app.get('/', (req, res) => {
-  res.render('index'); // Render public homepage
+app.get('/', async (req, res) => {
+  try {
+    if (!db) throw new Error('Database not initialized');
+    const notices = await db.collection('notices').find().toArray();
+    res.render('index', { notices });
+  } catch (err) {
+    console.error('Error fetching notices:', err);
+    res.render('index', { notices: [], error: 'Failed to load notices' });
+  }
 });
+
 
 app.set('view engine', 'ejs');
 app.use('/uploads', express.static('public/uploads')); // Serves public/css/styles.css, public/uploads/, etc.
@@ -271,7 +280,7 @@ app.get('/terms-of-service', (req, res) => {
   res.render('terms-of-service');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
