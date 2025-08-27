@@ -3,6 +3,7 @@ const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 const sanitizeHtml = require('sanitize-html');
 const session = require('express-session');
+const flash = require('connect-flash');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -12,6 +13,15 @@ const bcrypt = require('bcryptjs');
 const app = express();
 
 let db;
+
+const MongoStore = require('connect-mongo');
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'Liwalethu@1',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI })
+}));
+
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -52,6 +62,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false
 }));
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -128,7 +139,7 @@ async function startServer() {
   app.get('/', async (req, res) => {
     try {
       const notices = await db.collection('notices').find().toArray();
-      res.render('index', { notices });
+      res.render('index', { notices, error: null });
     } catch (err) {
       console.error('Error fetching notices:', err);
       res.render('index', { notices: [], error: 'Failed to load notices' });
@@ -159,7 +170,7 @@ async function startServer() {
   app.get('/admin/practice-areas', requireLogin, async (req, res) => {
     try {
       const practiceAreas = await db.collection('practiceAreas').find().toArray();
-      res.render('admin_practice_areas', { practiceAreas });
+      res.render('admin_practice_areas', { practiceAreas, error: null });
     } catch (err) {
       console.error('Error fetching practice areas:', err);
       res.render('admin_practice_areas', { practiceAreas: [], error: 'Failed to load practice areas' });
@@ -184,6 +195,16 @@ async function startServer() {
     }
   });
 
+  app.get('/admin/newsletters', requireLogin, async (req, res) => {
+    try {
+      const newsletters = await db.collection('newsletters').find().toArray();
+      res.render('admin_newsletters', { newsletters, error: null });
+    } catch (err) {
+      console.error('Error fetching newsletters:', err);
+      res.render('admin_newsletters', { newsletters: [], error: 'Failed to load newsletters' });
+    }
+  });
+
   app.post('/admin/newsletters', requireLogin, upload.single('file'), async (req, res) => {
     const { title, date } = req.body;
     console.log('Newsletter upload attempt:', { title, date, file: req.file });
@@ -204,23 +225,23 @@ async function startServer() {
     }
   });
 
-  app.get('/admin/newsletters', requireLogin, async (req, res) => {
-    try {
-      const newsletters = await db.collection('newsletters').find().toArray();
-      res.render('admin_newsletters', { newsletters });
-    } catch (err) {
-      console.error('Error fetching newsletters:', err);
-      res.render('admin_newsletters', { newsletters: [], error: 'Failed to load newsletters' });
-    }
-  });
-
   app.get('/newsletters', async (req, res) => {
     try {
       const newsletters = await db.collection('newsletters').find().toArray();
-      res.render('newsletters', { newsletters });
+      res.render('newsletters', { newsletters, error: null });
     } catch (err) {
       console.error('Error fetching newsletters:', err);
       res.render('newsletters', { newsletters: [], error: 'Failed to load newsletters' });
+    }
+  });
+
+  app.get('/admin/events', requireLogin, async (req, res) => {
+    try {
+      const events = await db.collection('events').find().toArray();
+      res.render('admin_events', { events, error: null });
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      res.render('admin_events', { events: [], error: 'Failed to load events' });
     }
   });
 
@@ -245,20 +266,10 @@ async function startServer() {
     }
   });
 
-  app.get('/admin/events', requireLogin, async (req, res) => {
-    try {
-      const events = await db.collection('events').find().toArray();
-      res.render('admin_events', { events });
-    } catch (err) {
-      console.error('Error fetching events:', err);
-      res.render('admin_events', { events: [], error: 'Failed to load events' });
-    }
-  });
-
   app.get('/events', async (req, res) => {
     try {
       const events = await db.collection('events').find().toArray();
-      res.render('events', { events });
+      res.render('events', { events, error: null });
     } catch (err) {
       console.error('Error fetching events:', err);
       res.render('events', { events: [], error: 'Failed to load events' });
