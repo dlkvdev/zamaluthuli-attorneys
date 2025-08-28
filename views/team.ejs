@@ -1,14 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Our Team</title>
+  <title>zla Team</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" type="image/x-icon" href="/MEDIA/backend/favicon.png">
 </head>
 <body>
-    <!-- Header -->
+  <!-- Header -->
   <%- include('partials/header') %>
   <div class="container mt-5">
     <h1>Our Team</h1>
@@ -24,7 +27,7 @@
                 <h5 class="card-title"><%= member.name %></h5>
                 <p class="card-text">Position: <%= member.position %></p>
                 <p class="card-text"><%= member.bio %></p>
-                <a href="/team/<%= member.id %>" class="btn btn-primary">View Details</a>
+                <a href="/team/<%= member._id.toString() %>" class="btn btn-primary">View Details</a>
               </div>
             </div>
           </div>
@@ -34,7 +37,7 @@
       <p>No team members available.</p>
     <% } %>
   </div>
-    <!-- Footer -->
+  <!-- Footer -->
   <%- include('partials/footer') %>
 </body>
 </html>

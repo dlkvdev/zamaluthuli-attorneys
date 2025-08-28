@@ -1,4 +1,6 @@
 const bcrypt = require('bcryptjs');
-const password = 'Knoxnavis&2020';
-const hashedPassword = bcrypt.hashSync(password, 10);
-console.log('Hashed Password:', hashedPassword);
+const newPassword = 'Steptronics@1'; // Replace with your desired password
+bcrypt.hash(newPassword, 10, (err, hash) => {
+  if (err) throw err;
+  console.log('Hashed password:', hash);
+});

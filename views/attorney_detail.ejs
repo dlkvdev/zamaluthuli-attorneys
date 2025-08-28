@@ -3,31 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attorney Details</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>Attorney Details - Zama Luthuli Attorneys</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      background-image: url('/MEDIA/wallpaper.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Roboto', sans-serif;
+    }
+    .content {
+      flex: 1 0 auto;
+      background: rgba(236, 240, 241, 0.95);
+      margin: 2rem auto;
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 800px;
+    }
+    .btn-primary {
+      background-color: #004aad;
+      border-color: #004aad;
+    }
+    .btn-primary:hover {
+      background-color: #003780;
+      border-color: #003780;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #5a6268;
+    }
+    .img-fluid {
+      max-width: 200px;
+      border-radius: 10px;
+    }
+    h1 {
+      color: #00d1b2;
+    }
+    p {
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <% if (attorney) { %>
-      <h1><%= attorney.name %></h1>
-      <div class="row">
-        <div class="col-md-4">
-          <% if (attorney.photoPath) { %>
-            <img src="<%= attorney.photoPath %>?t=<%= Date.now() %>" class="img-fluid mb-3" alt="<%= attorney.name %>">
-          <% } %>
+  <%- include('partials/header') %>
+  <div class="content">
+    <div class="container">
+      <% if (teamMember) { %>
+        <h1><%= teamMember.name %></h1>
+        <div class="row">
+          <div class="col-md-4">
+            <% if (teamMember.photoPath) { %>
+              <img src="<%= teamMember.photoPath %>?t=<%= Date.now() %>" class="img-fluid mb-3" alt="<%= teamMember.name %>">
+            <% } %>
+          </div>
+          <div class="col-md-8">
+            <p><strong>Position:</strong> <%= teamMember.position %></p>
+            <p><strong>Qualifications:</strong> <%= teamMember.qualifications || 'Not provided' %></p>
+            <p><strong>Biography:</strong> <%= teamMember.biography || 'Not provided' %></p>
+            <p><strong>Email:</strong> <a href="mailto:<%= teamMember.email %>"><%= teamMember.email %></a></p>
+            <p><strong>Contact Number:</strong> <%= teamMember.contactNumber || 'Not provided' %></p>
+            <a href="mailto:<%= teamMember.email %>" class="btn btn-primary">Contact This Attorney</a>
+          </div>
         </div>
-        <div class="col-md-8">
-          <p><strong>Position:</strong> <%= attorney.position %></p>
-          <p><strong>Biography:</strong> <%= attorney.bio || 'No biography provided' %></p>
-          <a href="mailto:contact@example.com" class="btn btn-primary">Contact This Attorney</a>
-        </div>
-      </div>
-    <% } else { %>
-      <h1>Attorney Not Found</h1>
-      <p>Attorney not found.</p>
-    <% } %>
-    <a href="/team" class="btn btn-secondary mt-3">Back to Team</a>
+      <% } else { %>
+        <h1>Attorney Not Found</h1>
+        <p>Attorney not found.</p>
+      <% } %>
+      <a href="/team" class="btn btn-secondary mt-3">Back to Team</a>
+    </div>
   </div>
+  <%- include('partials/footer') %>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
