@@ -251,6 +251,16 @@ async function startServer() {
     }
   });
 
+  // Privacy Policy route
+  app.get('/privacy-policy', (req, res) => {
+    res.render('privacy-policy', { lastUpdated: 'August 28, 2025' });
+  });
+
+  // Terms of Service route
+  app.get('/terms-of-service', (req, res) => {
+    res.render('terms-of-service', { lastUpdated: 'August 28, 2025' });
+  });
+
   // Admin routes for practice areas
   app.get('/admin/practice-areas', requireLogin, async (req, res) => {
     try {
@@ -281,17 +291,22 @@ async function startServer() {
   });
 
   app.post('/admin/practice-areas/delete/:id', requireLogin, async (req, res) => {
-    try {
-      await db.collection('practiceAreas').deleteOne({ _id: new ObjectId(req.params.id) });
-      res.redirect('/admin/practice-areas');
-    } catch (err) {
-      console.error('Error deleting practice area:', err);
-      res.render('admin_practice_areas', {
-        practiceAreas: await db.collection('practiceAreas').find().toArray(),
-        error: 'Failed to delete practice area'
-      });
-    }
+  try {
+    await db.collection('practiceAreas').deleteOne({ _id: new ObjectId(req.params.id) });
+    res.redirect('/admin');
+  } catch (err) {
+    console.error('Error deleting practice area:', err);
+    res.render('admin', {
+      teamMembers: await db.collection('teamMembers').find().toArray(),
+      practiceAreas: await db.collection('practiceAreas').find().toArray(),
+      newsletters: await db.collection('newsletters').find().toArray(),
+      events: await db.collection('events').find().toArray(),
+      error: 'Failed to delete practice area',
+      title: 'Admin Dashboard'
+    });
+  }
   });
+
 
   app.get('/admin/newsletters', requireLogin, async (req, res) => {
     try {
@@ -484,6 +499,8 @@ async function startServer() {
     }
   });
 
+
+
   app.get('/events', async (req, res) => {
     try {
       const events = await db.collection('events').find().toArray();
@@ -535,6 +552,7 @@ async function startServer() {
       });
     }
   });
+
 
   // Start server
   const PORT = process.env.PORT || 10000;

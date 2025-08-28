@@ -3,84 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Notices - Zama Luthuli Attorneys</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>Manage Notices</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <style>
-    body { background-color: #1c2526; color: #e0e0e0; font-family: 'Roboto', sans-serif; margin: 0; padding: 0; }
-    .dashboard-container { display: flex; min-height: 100vh; }
-    .sidebar { width: 250px; background: #2c3e50; padding: 20px 0; position: fixed; height: 100%; }
-    .sidebar ul { list-style: none; padding: 0; }
-    .sidebar ul li { padding: 15px 20px; }
-    .sidebar ul li a { color: #e0e0e0; text-decoration: none; font-size: 1.1rem; }
-    .sidebar ul li:hover { background-color: #34495e; }
-    .main-content { margin-left: 250px; padding: 20px; width: calc(100% - 250px); background: #ecf0f1; }
-    .form-card, .list-card { background: #34495e; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-    .form-card h2, .list-card h2 { color: #00d1b2; margin-top: 0; }
+    body { padding: 20px; }
     .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; color: #b0b0b0; }
-    .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #444; border-radius: 5px; background: #333; color: #e0e0e0; }
-    .btn-add { background: #00d1b2; color: #1c2526; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-    .btn-add:hover { background: #00b386; }
-    .notice-list { list-style: none; padding: 0; }
-    .notice-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #2c3e50; border-radius: 5px; margin-bottom: 10px; }
-    .notice-item a { color: #00d1b2; text-decoration: none; }
-    .notice-item a:hover { text-decoration: underline; }
-    .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-    .btn-delete:hover { background: #c82333; }
-    @media (max-width: 768px) { .main-content { margin-left: 0; width: 100%; } .sidebar { display: none; } }
+    .error-message { color: red; }
   </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    <div class="sidebar">
-      <ul>
-        <li><a href="/admin">Dashboard</a></li>
-        <li><a href="/admin/notices">Manage Notices</a></li>
-        <li><a href="/admin/newsletters">Manage Newsletters</a></li>
-        <li><a href="/admin/team">Manage Team</a></li>
-        <li><a href="/admin/practice-areas">Manage Practice Areas</a></li>
-        <li><a href="/admin/events">Manage Events</a></li>
+  <div class="container">
+    <h1 class="my-4">Manage Notices</h1>
+
+    <!-- Navigation Links -->
+    <nav class="nav nav-pills mb-4">
+      <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+      <a class="nav-link active" href="/admin/notices">Manage Notices</a>
+      <a class="nav-link" href="/admin/newsletters">Manage Newsletters</a>
+      <a class="nav-link" href="/admin/team">Manage Team</a>
+      <a class="nav-link" href="/admin/practice-areas">Manage Practice Areas</a>
+      <a class="nav-link" href="/admin/events">Manage Events</a>
+    </nav>
+
+    <% if (error) { %>
+      <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <!-- Add New Notice -->
+    <h2>Add New Notice</h2>
+    <form action="/admin/notices" method="POST">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+      </div>
+      <div class="form-group">
+        <label for="content">Content</label>
+        <textarea class="form-control" id="content" name="content" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="date">Date (optional)</label>
+        <input type="date" class="form-control" id="date" name="date">
+      </div>
+      <button type="submit" class="btn btn-primary">Add Notice</button>
+    </form>
+
+    <!-- Existing Notices -->
+    <h2 class="mt-5">Existing Notices</h2>
+    <% if (notices && notices.length > 0) { %>
+      <ul class="list-group">
+        <% notices.forEach(notice => { %>
+          <li class="list-group-item">
+            <h5><%= notice.title %></h5>
+            <p>Date: <%= notice.date || 'No date specified' %></p>
+            <p><%= notice.content %></p>
+            <form action="/admin/notices/delete/<%= notice._id %>" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          </li>
+        <% }) %>
       </ul>
-    </div>
-    <div class="main-content">
-      <div class="form-card">
-        <h2>Add New Notice</h2>
-        <form method="POST" action="/admin/notices">
-          <div class="form-group">
-            <label for="title">Title</label>
-            <input type="text" id="title" name="title" required>
-          </div>
-          <div class="form-group">
-            <label for="content">Content</label>
-            <textarea id="content" name="content" required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="date">Date (optional)</label>
-            <input type="date" id="date" name="date">
-          </div>
-          <button type="submit" class="btn-add">Add Notice</button>
-        </form>
-      </div>
-      <div class="list-card">
-        <h2>Existing Notices</h2>
-        <% if (notices.length > 0) { %>
-          <ul class="notice-list">
-            <% notices.forEach(notice => { %>
-              <li class="notice-item">
-                <span><%= notice.title %></span>
-                <span>Date: <%= notice.date || 'N/A' %></span>
-                <form method="POST" action="/admin/notices/delete/<%= notice.id %>" style="display: inline;">
-                  <button type="submit" class="btn-delete">Delete</button>
-                </form>
-              </li>
-            <% }) %>
-          </ul>
-        <% } else { %>
-          <p>No notices available.</p>
-        <% } %>
-      </div>
-      <a href="/admin" class="btn-add" style="display: inline-block; margin-top: 20px;">Back to Dashboard</a>
-    </div>
+    <% } else { %>
+      <p>No notices available.</p>
+    <% } %>
+
+    <a href="/admin" class="btn btn-secondary mt-4">Back to Dashboard</a>
   </div>
+
+  <!-- Bootstrap JS and Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
 </body>
 </html>
