@@ -17,7 +17,7 @@ let db;
 let bucket; // GridFS bucket for file storage
 
 // Multer setup for file uploads (memory storage for GridFS)
-const storage = multer.memoryStorage(); // Store files in memory before uploading to GridFS
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -33,7 +33,7 @@ const upload = multer({
 
 // Middleware
 app.set('view engine', 'ejs');
-app.use('/uploads', express.static('public/uploads')); // Keep for backward compatibility (optional)
+app.use('/uploads', express.static('public/uploads'));
 app.use('/MEDIA', express.static('public/MEDIA'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -48,9 +48,13 @@ app.use(session({
   }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    secure: process.env.NODE_ENV === 'production' // Secure cookies in production
+    secure: false // Temporary for debugging
   }
 }));
+app.use((req, res, next) => {
+  console.log('Session initialized:', req.session);
+  next();
+});
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
@@ -59,36 +63,48 @@ app.use(passport.session());
 passport.use(new LocalStrategy(
   async (username, password, done) => {
     try {
+      console.log('Attempting login with username:', username);
+      console.log('Raw password input:', password); // Be cautious in production
       const user = await db.collection('users').findOne({ username });
+      console.log('User found:', user);
       if (!user) {
+        console.log('Login failed: Incorrect username');
         return done(null, false, { message: 'Incorrect username.' });
       }
       const isMatch = await bcrypt.compare(password, user.password);
+      console.log('Password match:', isMatch);
       if (!isMatch) {
+        console.log('Login failed: Incorrect password');
         return done(null, false, { message: 'Incorrect password.' });
       }
+      console.log('Login successful for user:', username);
       return done(null, user);
     } catch (err) {
+      console.error('Authentication error:', err);
       return done(err);
     }
   }
 ));
 
 passport.serializeUser((user, done) => {
+  console.log('Serializing user:', user._id);
   done(null, user._id);
 });
 
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await db.collection('users').findOne({ _id: new ObjectId(id) });
+    console.log('Deserialized user:', user);
     done(null, user);
   } catch (err) {
+    console.error('Deserialization error:', err);
     done(err);
   }
 });
 
 // Require login middleware
 const requireLogin = (req, res, next) => {
+  console.log('Checking authentication:', req.isAuthenticated());
   if (req.isAuthenticated()) {
     return next();
   }
@@ -140,6 +156,13 @@ app.get('/file/:id', async (req, res) => {
   }
 });
 
+// Test flash route
+app.get('/test-flash', (req, res) => {
+  console.log('Testing flash message');
+  req.flash('error', 'Test flash message');
+  res.redirect('/login');
+});
+
 // Start server and define routes
 async function startServer() {
   await connectDB();
@@ -157,16 +180,19 @@ async function startServer() {
 
   // Login routes
   app.get('/login', (req, res) => {
-    res.render('login', { error: req.flash('error') });
+    const error = req.flash('error');
+    console.log('Rendering login page with flash error:', error);
+    res.render('login', { error });
   });
 
-  app.post('/login',
+  app.post('/login', (req, res, next) => {
+    console.log('Received login request:', req.body);
     passport.authenticate('local', {
       successRedirect: '/admin/dashboard',
       failureRedirect: '/login',
       failureFlash: true
-    })
-  );
+    })(req, res, next);
+  });
 
   app.get('/logout', (req, res) => {
     req.logout((err) => {
@@ -177,6 +203,7 @@ async function startServer() {
 
   // Admin dashboard route
   app.get('/admin/dashboard', requireLogin, (req, res) => {
+    console.log('Accessing admin dashboard for user:', req.user);
     res.render('admin_dashboard', { user: req.user });
   });
 
