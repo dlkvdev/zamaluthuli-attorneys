@@ -13,31 +13,27 @@
 <body>
   <!-- Header -->
   <%- include('partials/header') %>
-  <div class="container mt-5">
-    <h1>Our Team</h1>
-    <% if (teamMembers.length > 0) { %>
-      <div class="row">
-        <% teamMembers.forEach(member => { %>
-          <div class="col-md-4 mb-4">
-            <div class="card">
-              <% if (member.photoPath) { %>
-                <img src="<%= member.photoPath %>?t=<%= Date.now() %>" class="card-img-top" alt="<%= member.name %>">
-              <% } %>
-              <div class="card-body">
-                <h5 class="card-title"><%= member.name %></h5>
-                <p class="card-text">Position: <%= member.position %></p>
-                <p class="card-text"><%= member.bio %></p>
-                <a href="/team/<%= member._id.toString() %>" class="btn btn-primary">View Details</a>
-              </div>
-            </div>
-          </div>
-        <% }) %>
+<h1>Our Team</h1>
+
+<% if (teamMembers && teamMembers.length > 0) { %>
+  <div class="team-members">
+    <% teamMembers.forEach(teamMember => { %>
+      <div class="team-member">
+        <% if (teamMember.photoId) { %>
+          <img src="/file/<%= teamMember.photoId %>" alt="<%= teamMember.name %>">
+        <% } else { %>
+          <img src="/MEDIA/placeholder.jpg" alt="Placeholder">
+        <% } %>
+        <h2><%= teamMember.name %></h2>
+        <p><strong>Position:</strong> <%= teamMember.position %></p>
+        <a href="/team/<%= teamMember._id %>">View Details</a>
       </div>
-    <% } else { %>
-      <p>No team members available.</p>
-    <% } %>
+    <% }); %>
   </div>
-  <!-- Footer -->
-  <%- include('partials/footer') %>
+<% } else { %>
+  <p>No team members available.</p>
+<% } %>
+
+<%- include('partials/footer') %>
 </body>
 </html>

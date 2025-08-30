@@ -57,34 +57,34 @@
   </style>
 </head>
 <body>
-  <%- include('partials/header') %>
-  <div class="content">
-    <div class="container">
-      <% if (teamMember) { %>
-        <h1><%= teamMember.name %></h1>
-        <div class="row">
-          <div class="col-md-4">
-            <% if (teamMember.photoPath) { %>
-              <img src="<%= teamMember.photoPath %>?t=<%= Date.now() %>" class="img-fluid mb-3" alt="<%= teamMember.name %>">
-            <% } %>
-          </div>
-          <div class="col-md-8">
-            <p><strong>Position:</strong> <%= teamMember.position %></p>
-            <p><strong>Qualifications:</strong> <%= teamMember.qualifications || 'Not provided' %></p>
-            <p><strong>Biography:</strong> <%= teamMember.biography || 'Not provided' %></p>
-            <p><strong>Email:</strong> <a href="mailto:<%= teamMember.email %>"><%= teamMember.email %></a></p>
-            <p><strong>Contact Number:</strong> <%= teamMember.contactNumber || 'Not provided' %></p>
-            <a href="mailto:<%= teamMember.email %>" class="btn btn-primary">Contact This Attorney</a>
-          </div>
-        </div>
+<%- include('partials/header') %>
+
+<% if (teamMember) { %>
+  <div class="attorney-detail">
+    <div class="attorney-image">
+      <% if (teamMember.photoId) { %>
+        <img src="/file/<%= teamMember.photoId %>" alt="<%= teamMember.name %>">
       <% } else { %>
-        <h1>Attorney Not Found</h1>
-        <p>Attorney not found.</p>
+        <img src="/MEDIA/placeholder.jpg" alt="Placeholder">
       <% } %>
-      <a href="/team" class="btn btn-secondary mt-3">Back to Team</a>
+    </div>
+    <div class="attorney-info">
+      <h1><%= teamMember.name %></h1>
+      <p><strong>Position:</strong> <%= teamMember.position %></p>
+      <p><strong>Qualifications:</strong> <%= teamMember.qualifications %></p>
+      <p><strong>Biography:</strong> <%= teamMember.biography %></p>
+      <p><strong>Email:</strong> <a href="mailto:<%= teamMember.email %>"><%= teamMember.email %></a></p>
+      <p><strong>Contact Number:</strong> <%= teamMember.contactNumber %></p>
+      <a href="/contact">Contact This Attorney</a>
     </div>
   </div>
-  <%- include('partials/footer') %>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<% } else { %>
+  <h1>Attorney Not Found</h1>
+  <p>Attorney not found.</p>
+<% } %>
+
+<a href="/team">Back to Team</a>
+
+<%- include('partials/footer') %>  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

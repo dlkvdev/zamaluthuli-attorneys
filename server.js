@@ -1,7 +1,6 @@
-
 require('dotenv').config();
 const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId, GridFSBucket } = require('mongodb');
 const sanitizeHtml = require('sanitize-html');
 const session = require('express-session');
 const flash = require('connect-flash');
@@ -11,60 +10,46 @@ const fs = require('fs').promises;
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
+const MongoStore = require('connect-mongo');
 const app = express();
 
 let db;
+let bucket; // GridFS bucket for file storage
 
-const MongoStore = require('connect-mongo');
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'Liwalethu@1',
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI })
-}));
-
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.fieldname === 'file') {
-      cb(null, 'public/uploads/newsletters/');
-    } else if (file.fieldname === 'photo' || file.fieldname === 'additionalPhotos') {
-      cb(null, 'public/uploads/events/');
-    } else if (file.fieldname === 'teamPhoto') {
-      cb(null, 'public/uploads/team/');
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Multer setup for file uploads (memory storage for GridFS)
+const storage = multer.memoryStorage(); // Store files in memory before uploading to GridFS
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'file' && file.mimetype === 'application/pdf') {
       cb(null, true);
-    } else if ((file.fieldname === 'photo' || file.fieldname === 'additionalPhotos') && file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else if (file.fieldname === 'teamPhoto' && file.mimetype.startsWith('image/')) {
+    } else if ((file.fieldname === 'photo' || file.fieldname === 'additionalPhotos' || file.fieldname === 'teamPhoto') && file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
       cb(new Error('Invalid file type. Only PDFs for newsletters and images for events/team are allowed.'), false);
     }
-  }
+  },
 });
 
 // Middleware
 app.set('view engine', 'ejs');
-app.use('/uploads', express.static('public/uploads'));
+app.use('/uploads', express.static('public/uploads')); // Keep for backward compatibility (optional)
 app.use('/MEDIA', express.static('public/MEDIA'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'Liwalethu@1',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  store: MongoStore.create({ 
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60 // 24 hours
+  }),
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    secure: process.env.NODE_ENV === 'production' // Secure cookies in production
+  }
 }));
 app.use(flash());
 app.use(passport.initialize());
@@ -110,7 +95,7 @@ const requireLogin = (req, res, next) => {
   res.redirect('/login');
 };
 
-// Connect to MongoDB
+// Connect to MongoDB and initialize GridFS
 async function connectDB() {
   const uri = process.env.MONGODB_URI;
   console.log('MONGODB_URI:', uri);
@@ -127,13 +112,33 @@ async function connectDB() {
     });
     await client.connect();
     db = client.db('attorneys');
-    console.log('MongoDB connected');
+    bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+    console.log('MongoDB connected with GridFS');
     return db;
   } catch (err) {
     console.error('Failed to connect to MongoDB:', err);
     process.exit(1);
   }
 }
+
+// File download route for GridFS
+app.get('/file/:id', async (req, res) => {
+  try {
+    const fileId = new ObjectId(req.params.id);
+    const downloadStream = bucket.openDownloadStream(fileId);
+    downloadStream.on('file', (file) => {
+      res.set('Content-Type', file.contentType);
+      res.set('Content-Disposition', `attachment; filename="${file.filename}"`);
+    });
+    downloadStream.on('error', () => {
+      res.status(404).send('File not found');
+    });
+    downloadStream.pipe(res);
+  } catch (err) {
+    console.error('Error downloading file:', err);
+    res.status(500).send('Error downloading file');
+  }
+});
 
 // Start server and define routes
 async function startServer() {
@@ -218,6 +223,21 @@ async function startServer() {
   app.post('/admin/team', requireLogin, upload.single('teamPhoto'), async (req, res) => {
     const { name, position, qualifications, biography, email, contactNumber } = req.body;
     try {
+      let photoId = null;
+      if (req.file) {
+        const uploadStream = bucket.openUploadStream(req.file.originalname, {
+          contentType: req.file.mimetype
+        });
+        await new Promise((resolve, reject) => {
+          uploadStream.end(req.file.buffer, (err) => {
+            if (err) reject(err);
+            else {
+              photoId = uploadStream.id;
+              resolve();
+            }
+          });
+        });
+      }
       await db.collection('teamMembers').insertOne({
         name: sanitizeHtml(name),
         position: sanitizeHtml(position),
@@ -225,7 +245,7 @@ async function startServer() {
         biography: sanitizeHtml(biography),
         email: sanitizeHtml(email),
         contactNumber: sanitizeHtml(contactNumber),
-        photoPath: req.file ? `/uploads/team/${req.file.filename}` : null,
+        photoId: photoId ? photoId.toString() : null,
         createdAt: new Date()
       });
       res.redirect('/admin/team');
@@ -240,6 +260,10 @@ async function startServer() {
 
   app.post('/admin/team/delete/:id', requireLogin, async (req, res) => {
     try {
+      const teamMember = await db.collection('teamMembers').findOne({ _id: new ObjectId(req.params.id) });
+      if (teamMember && teamMember.photoId) {
+        await bucket.delete(new ObjectId(teamMember.photoId));
+      }
       await db.collection('teamMembers').deleteOne({ _id: new ObjectId(req.params.id) });
       res.redirect('/admin/team');
     } catch (err) {
@@ -291,22 +315,21 @@ async function startServer() {
   });
 
   app.post('/admin/practice-areas/delete/:id', requireLogin, async (req, res) => {
-  try {
-    await db.collection('practiceAreas').deleteOne({ _id: new ObjectId(req.params.id) });
-    res.redirect('/admin');
-  } catch (err) {
-    console.error('Error deleting practice area:', err);
-    res.render('admin', {
-      teamMembers: await db.collection('teamMembers').find().toArray(),
-      practiceAreas: await db.collection('practiceAreas').find().toArray(),
-      newsletters: await db.collection('newsletters').find().toArray(),
-      events: await db.collection('events').find().toArray(),
-      error: 'Failed to delete practice area',
-      title: 'Admin Dashboard'
-    });
-  }
+    try {
+      await db.collection('practiceAreas').deleteOne({ _id: new ObjectId(req.params.id) });
+      res.redirect('/admin');
+    } catch (err) {
+      console.error('Error deleting practice area:', err);
+      res.render('admin', {
+        teamMembers: await db.collection('teamMembers').find().toArray(),
+        practiceAreas: await db.collection('practiceAreas').find().toArray(),
+        newsletters: await db.collection('newsletters').find().toArray(),
+        events: await db.collection('events').find().toArray(),
+        error: 'Failed to delete practice area',
+        title: 'Admin Dashboard'
+      });
+    }
   });
-
 
   app.get('/admin/newsletters', requireLogin, async (req, res) => {
     try {
@@ -322,10 +345,25 @@ async function startServer() {
     const { title, date } = req.body;
     console.log('Newsletter upload attempt:', { title, date, file: req.file });
     try {
+      let fileId = null;
+      if (req.file) {
+        const uploadStream = bucket.openUploadStream(req.file.originalname, {
+          contentType: req.file.mimetype
+        });
+        await new Promise((resolve, reject) => {
+          uploadStream.end(req.file.buffer, (err) => {
+            if (err) reject(err);
+            else {
+              fileId = uploadStream.id;
+              resolve();
+            }
+          });
+        });
+      }
       await db.collection('newsletters').insertOne({
         title: sanitizeHtml(title),
         date: date ? sanitizeHtml(date) : null,
-        filePath: req.file ? `/uploads/newsletters/${req.file.filename}` : null
+        fileId: fileId ? fileId.toString() : null
       });
       res.redirect('/admin/newsletters');
     } catch (err) {
@@ -343,6 +381,10 @@ async function startServer() {
       console.log('Delete newsletter request URL:', req.originalUrl);
       if (!ObjectId.isValid(id)) {
         throw new Error('Invalid newsletter ID');
+      }
+      const newsletter = await db.collection('newsletters').findOne({ _id: new ObjectId(id) });
+      if (newsletter && newsletter.fileId) {
+        await bucket.delete(new ObjectId(newsletter.fileId));
       }
       await db.collection('newsletters').deleteOne({ _id: new ObjectId(id) });
       res.redirect('/admin/newsletters');
@@ -430,13 +472,48 @@ async function startServer() {
     const { title, date, description, photoCaptions } = req.body;
     console.log('Event upload attempt:', { title, date, description, photo: req.files.photo, additionalPhotos: req.files.additionalPhotos });
     try {
+      let photoId = null;
+      let additionalPhotoIds = [];
       const captionsArray = photoCaptions ? photoCaptions.split(',').map(c => c.trim()) : [];
+
+      if (req.files.photo) {
+        const uploadStream = bucket.openUploadStream(req.files.photo[0].originalname, {
+          contentType: req.files.photo[0].mimetype
+        });
+        await new Promise((resolve, reject) => {
+          uploadStream.end(req.files.photo[0].buffer, (err) => {
+            if (err) reject(err);
+            else {
+              photoId = uploadStream.id;
+              resolve();
+            }
+          });
+        });
+      }
+
+      if (req.files.additionalPhotos) {
+        for (const file of req.files.additionalPhotos) {
+          const uploadStream = bucket.openUploadStream(file.originalname, {
+            contentType: file.mimetype
+          });
+          await new Promise((resolve, reject) => {
+            uploadStream.end(file.buffer, (err) => {
+              if (err) reject(err);
+              else {
+                additionalPhotoIds.push(uploadStream.id.toString());
+                resolve();
+              }
+            });
+          });
+        }
+      }
+
       await db.collection('events').insertOne({
         title: sanitizeHtml(title),
         date: date ? sanitizeHtml(date) : null,
         description: sanitizeHtml(description),
-        photoPath: req.files.photo ? `/uploads/events/${req.files.photo[0].filename}` : null,
-        additionalPhotoPaths: req.files.additionalPhotos ? req.files.additionalPhotos.map(f => `/uploads/events/${f.filename}`) : [],
+        photoId: photoId ? photoId.toString() : null,
+        additionalPhotoIds: additionalPhotoIds,
         photoCaptions: captionsArray
       });
       res.redirect('/admin/events');
@@ -477,14 +554,12 @@ async function startServer() {
       }
       const event = await db.collection('events').findOne({ _id: new ObjectId(id) });
       if (event) {
-        if (event.photoPath) {
-          const filePath = path.join(__dirname, 'public', event.photoPath);
-          await fs.unlink(filePath).catch(err => console.error('Error deleting cover photo:', err));
+        if (event.photoId) {
+          await bucket.delete(new ObjectId(event.photoId));
         }
-        if (event.additionalPhotoPaths && event.additionalPhotoPaths.length > 0) {
-          for (const photoPath of event.additionalPhotoPaths) {
-            const filePath = path.join(__dirname, 'public', photoPath);
-            await fs.unlink(filePath).catch(err => console.error('Error deleting additional photo:', err));
+        if (event.additionalPhotoIds && event.additionalPhotoIds.length > 0) {
+          for (const photoId of event.additionalPhotoIds) {
+            await bucket.delete(new ObjectId(photoId));
           }
         }
       }
@@ -498,8 +573,6 @@ async function startServer() {
       });
     }
   });
-
-
 
   app.get('/events', async (req, res) => {
     try {
@@ -552,7 +625,6 @@ async function startServer() {
       });
     }
   });
-
 
   // Start server
   const PORT = process.env.PORT || 10000;
