@@ -16,20 +16,9 @@ const app = express();
 let db;
 let bucket; // GridFS bucket for file storage
 
-// Multer setup for file uploads (memory storage for GridFS)
+// Multer setup for file uploads (memory storage for GridFS) - Temporary for debugging
 const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    if (file.fieldname === 'file' && file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else if ((file.fieldname === 'photo' || file.fieldname === 'additionalPhotos' || file.fieldname === 'teamPhoto') && file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDFs for newsletters and images for events/team are allowed.'), false);
-    }
-  },
-});
+const upload = multer({ storage }); // Allow all fields for debugging
 
 // Middleware
 app.set('view engine', 'ejs');
@@ -59,12 +48,25 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Multer error handling middleware
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    console.error('Multer error:', err.message, 'Field:', err.field);
+    res.render(req.path.includes('/admin/events') ? 'admin_events' : 'admin', {
+      events: [],
+      error: `Multer error: ${err.message}${err.field ? ` (Field: ${err.field})` : ''}`,
+      success: null
+    });
+  } else {
+    next(err);
+  }
+});
+
 // Passport configuration
 passport.use(new LocalStrategy(
   async (username, password, done) => {
     try {
       console.log('Attempting login with username:', username);
-      console.log('Raw password input:', password); // Be cautious in production
       const user = await db.collection('users').findOne({ username });
       console.log('User found:', user);
       if (!user) {
@@ -140,13 +142,21 @@ async function connectDB() {
 // File download route for GridFS
 app.get('/file/:id', async (req, res) => {
   try {
-    const fileId = new ObjectId(req.params.id);
-    const downloadStream = bucket.openDownloadStream(fileId);
+    const fileId = req.params.id;
+    console.log('Attempting to download file with ID:', fileId);
+    if (!ObjectId.isValid(fileId)) {
+      console.log('Invalid ObjectId:', fileId);
+      return res.status(400).send('Invalid file ID');
+    }
+    const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
     downloadStream.on('file', (file) => {
+      console.log('Found file in GridFS:', file.filename);
       res.set('Content-Type', file.contentType);
-      res.set('Content-Disposition', `attachment; filename="${file.filename}"`);
+      const disposition = file.contentType.startsWith('image/') ? 'inline' : 'attachment';
+      res.set('Content-Disposition', `${disposition}; filename="${file.filename}"`);
     });
-    downloadStream.on('error', () => {
+    downloadStream.on('error', (err) => {
+      console.error('GridFS download error:', err);
       res.status(404).send('File not found');
     });
     downloadStream.pipe(res);
@@ -171,10 +181,10 @@ async function startServer() {
   app.get('/', async (req, res) => {
     try {
       const notices = await db.collection('notices').find().toArray();
-      res.render('index', { notices, error: null });
+      res.render('index', { notices, error: null, success: null });
     } catch (err) {
       console.error('Error fetching notices:', err);
-      res.render('index', { notices: [], error: 'Failed to load notices' });
+      res.render('index', { notices: [], error: 'Failed to load notices', success: null });
     }
   });
 
@@ -182,7 +192,7 @@ async function startServer() {
   app.get('/login', (req, res) => {
     const error = req.flash('error');
     console.log('Rendering login page with flash error:', error);
-    res.render('login', { error });
+    res.render('login', { error, success: null });
   });
 
   app.post('/login', (req, res, next) => {
@@ -204,7 +214,7 @@ async function startServer() {
   // Admin dashboard route
   app.get('/admin/dashboard', requireLogin, (req, res) => {
     console.log('Accessing admin dashboard for user:', req.user);
-    res.render('admin_dashboard', { user: req.user });
+    res.render('admin_dashboard', { user: req.user, success: null });
   });
 
   // Admin panel route
@@ -220,6 +230,7 @@ async function startServer() {
         newsletters,
         events,
         error: null,
+        success: null,
         title: 'Admin Dashboard'
       });
     } catch (err) {
@@ -230,6 +241,7 @@ async function startServer() {
         newsletters: [],
         events: [],
         error: 'Failed to load admin data',
+        success: null,
         title: 'Admin Dashboard'
       });
     }
@@ -239,11 +251,12 @@ async function startServer() {
   app.get('/admin/team', requireLogin, async (req, res) => {
     try {
       const teamMembers = await db.collection('teamMembers').find().toArray();
+      const success = req.flash('success') || null;
       console.log('Team members fetched for /admin/team:', teamMembers);
-      res.render('admin_team', { teamMembers, error: null });
+      res.render('admin_team', { teamMembers, error: null, success });
     } catch (err) {
       console.error('Error fetching team members:', err);
-      res.render('admin_team', { teamMembers: [], error: 'Failed to load team members' });
+      res.render('admin_team', { teamMembers: [], error: 'Failed to load team members', success: null });
     }
   });
 
@@ -275,12 +288,14 @@ async function startServer() {
         photoId: photoId ? photoId.toString() : null,
         createdAt: new Date()
       });
+      req.flash('success', 'Team member added successfully!');
       res.redirect('/admin/team');
     } catch (err) {
       console.error('Error saving team member:', err);
       res.render('admin_team', {
         teamMembers: await db.collection('teamMembers').find().toArray(),
-        error: 'Failed to save team member'
+        error: 'Failed to save team member',
+        success: null
       });
     }
   });
@@ -288,38 +303,108 @@ async function startServer() {
   app.post('/admin/team/delete/:id', requireLogin, async (req, res) => {
     try {
       const teamMember = await db.collection('teamMembers').findOne({ _id: new ObjectId(req.params.id) });
-      if (teamMember && teamMember.photoId) {
+      if (teamMember && teamMember.photoId && ObjectId.isValid(teamMember.photoId)) {
         await bucket.delete(new ObjectId(teamMember.photoId));
       }
       await db.collection('teamMembers').deleteOne({ _id: new ObjectId(req.params.id) });
+      req.flash('success', 'Team member deleted successfully!');
       res.redirect('/admin/team');
     } catch (err) {
       console.error('Error deleting team member:', err);
       res.render('admin_team', {
         teamMembers: await db.collection('teamMembers').find().toArray(),
-        error: 'Failed to delete team member'
+        error: 'Failed to delete team member',
+        success: null
       });
+    }
+  });
+
+  // Edit team member form
+  app.get('/admin/team/edit/:id', requireLogin, async (req, res) => {
+    try {
+      const teamMember = await db.collection('teamMembers').findOne({ _id: new ObjectId(req.params.id) });
+      if (!teamMember) {
+        const teamMembers = await db.collection('teamMembers').find().toArray();
+        return res.render('admin_team', { teamMembers, error: 'Team member not found', success: null });
+      }
+      const success = req.flash('success') || null;
+      res.render('admin_team_edit', { teamMember, error: null, success });
+    } catch (err) {
+      console.error('Error fetching team member for edit:', err);
+      const teamMembers = await db.collection('teamMembers').find().toArray();
+      res.render('admin_team', { teamMembers, error: 'Failed to load edit form', success: null });
+    }
+  });
+
+  // Update team member
+  app.post('/admin/team/edit/:id', requireLogin, upload.single('teamPhoto'), async (req, res) => {
+    const { name, position, qualifications, biography, email, contactNumber } = req.body;
+    const id = req.params.id;
+    try {
+      let photoId;
+      const existingMember = await db.collection('teamMembers').findOne({ _id: new ObjectId(id) });
+      if (!existingMember) {
+        throw new Error('Team member not found');
+      }
+
+      if (req.file) {
+        const uploadStream = bucket.openUploadStream(req.file.originalname, {
+          contentType: req.file.mimetype
+        });
+        await new Promise((resolve, reject) => {
+          uploadStream.end(req.file.buffer, (err) => {
+            if (err) reject(err);
+            else {
+              photoId = uploadStream.id.toString();
+              resolve();
+            }
+          });
+        });
+        if (existingMember.photoId && ObjectId.isValid(existingMember.photoId)) {
+          await bucket.delete(new ObjectId(existingMember.photoId));
+        }
+      } else {
+        photoId = existingMember.photoId;
+      }
+
+      await db.collection('teamMembers').updateOne({ _id: new ObjectId(id) }, {
+        $set: {
+          name: sanitizeHtml(name),
+          position: sanitizeHtml(position),
+          qualifications: sanitizeHtml(qualifications),
+          biography: sanitizeHtml(biography),
+          email: sanitizeHtml(email),
+          contactNumber: sanitizeHtml(contactNumber),
+          photoId,
+          updatedAt: new Date()
+        }
+      });
+      req.flash('success', 'Team member updated successfully!');
+      res.redirect('/admin/team');
+    } catch (err) {
+      console.error('Error updating team member:', err);
+      res.render('admin_team_edit', { teamMember: { _id: id, ...req.body }, error: 'Failed to update team member', success: null });
     }
   });
 
   // Privacy Policy route
   app.get('/privacy-policy', (req, res) => {
-    res.render('privacy-policy', { lastUpdated: 'August 28, 2025' });
+    res.render('privacy-policy', { lastUpdated: 'August 28, 2025', success: null });
   });
 
   // Terms of Service route
   app.get('/terms-of-service', (req, res) => {
-    res.render('terms-of-service', { lastUpdated: 'August 28, 2025' });
+    res.render('terms-of-service', { lastUpdated: 'August 28, 2025', success: null });
   });
 
   // Admin routes for practice areas
   app.get('/admin/practice-areas', requireLogin, async (req, res) => {
     try {
       const practiceAreas = await db.collection('practiceAreas').find().toArray();
-      res.render('admin_practice_areas', { practiceAreas, error: null });
+      res.render('admin_practice_areas', { practiceAreas, error: null, success: null });
     } catch (err) {
       console.error('Error fetching practice areas:', err);
-      res.render('admin_practice_areas', { practiceAreas: [], error: 'Failed to load practice areas' });
+      res.render('admin_practice_areas', { practiceAreas: [], error: 'Failed to load practice areas', success: null });
     }
   });
 
@@ -336,7 +421,8 @@ async function startServer() {
       console.error('Error saving practice area:', err);
       res.render('admin_practice_areas', {
         practiceAreas: await db.collection('practiceAreas').find().toArray(),
-        error: 'Failed to save practice area'
+        error: 'Failed to save practice area',
+        success: null
       });
     }
   });
@@ -353,6 +439,7 @@ async function startServer() {
         newsletters: await db.collection('newsletters').find().toArray(),
         events: await db.collection('events').find().toArray(),
         error: 'Failed to delete practice area',
+        success: null,
         title: 'Admin Dashboard'
       });
     }
@@ -361,16 +448,16 @@ async function startServer() {
   app.get('/admin/newsletters', requireLogin, async (req, res) => {
     try {
       const newsletters = await db.collection('newsletters').find().toArray();
-      res.render('admin_newsletters', { newsletters, error: null });
+      res.render('admin_newsletters', { newsletters, error: null, success: null });
     } catch (err) {
       console.error('Error fetching newsletters:', err);
-      res.render('admin_newsletters', { newsletters: [], error: 'Failed to load newsletters' });
+      res.render('admin_newsletters', { newsletters: [], error: 'Failed to load newsletters', success: null });
     }
   });
 
   app.post('/admin/newsletters', requireLogin, upload.single('file'), async (req, res) => {
     const { title, date } = req.body;
-    console.log('Newsletter upload attempt:', { title, date, file: req.file });
+    console.log('Newsletter upload attempt:', { title, date, file: req.file ? req.file.originalname : null });
     try {
       let fileId = null;
       if (req.file) {
@@ -382,6 +469,7 @@ async function startServer() {
             if (err) reject(err);
             else {
               fileId = uploadStream.id;
+              console.log('Uploaded file with ID:', fileId.toString());
               resolve();
             }
           });
@@ -392,12 +480,14 @@ async function startServer() {
         date: date ? sanitizeHtml(date) : null,
         fileId: fileId ? fileId.toString() : null
       });
+      console.log('Saved newsletter with fileId:', fileId ? fileId.toString() : null);
       res.redirect('/admin/newsletters');
     } catch (err) {
       console.error('Error saving newsletter:', err);
       res.render('admin_newsletters', {
         newsletters: await db.collection('newsletters').find().toArray(),
-        error: 'Failed to save newsletter. Try again.'
+        error: 'Failed to save newsletter. Try again.',
+        success: null
       });
     }
   });
@@ -410,7 +500,7 @@ async function startServer() {
         throw new Error('Invalid newsletter ID');
       }
       const newsletter = await db.collection('newsletters').findOne({ _id: new ObjectId(id) });
-      if (newsletter && newsletter.fileId) {
+      if (newsletter && newsletter.fileId && ObjectId.isValid(newsletter.fileId)) {
         await bucket.delete(new ObjectId(newsletter.fileId));
       }
       await db.collection('newsletters').deleteOne({ _id: new ObjectId(id) });
@@ -419,24 +509,25 @@ async function startServer() {
       console.error('Error deleting newsletter:', err);
       res.render('admin_newsletters', {
         newsletters: await db.collection('newsletters').find().toArray(),
-        error: 'Failed to delete newsletter'
+        error: 'Failed to delete newsletter',
+        success: null
       });
     }
   });
 
   // Contact route
   app.get('/contact', (req, res) => {
-    res.render('contact', { error: null });
+    res.render('contact', { error: null, success: null });
   });
 
   // Team route
   app.get('/team', async (req, res) => {
     try {
       const teamMembers = await db.collection('teamMembers').find().toArray();
-      res.render('team', { teamMembers, error: null });
+      res.render('team', { teamMembers, error: null, success: null });
     } catch (err) {
       console.error('Error fetching team members:', err);
-      res.render('team', { teamMembers: [], error: 'Failed to load team members' });
+      res.render('team', { teamMembers: [], error: 'Failed to load team members', success: null });
     }
   });
 
@@ -447,17 +538,17 @@ async function startServer() {
       console.log('Request ID for /team/:id:', id);
       if (!ObjectId.isValid(id)) {
         console.log('Invalid ObjectId:', id);
-        return res.render('attorney_detail', { teamMember: null, error: 'Invalid attorney ID' });
+        return res.render('attorney_detail', { teamMember: null, error: 'Invalid attorney ID', success: null });
       }
       const teamMember = await db.collection('teamMembers').findOne({ _id: new ObjectId(id) });
       console.log('Found team member:', teamMember);
       if (!teamMember) {
-        return res.render('attorney_detail', { teamMember: null, error: 'Attorney not found' });
+        return res.render('attorney_detail', { teamMember: null, error: 'Attorney not found', success: null });
       }
-      res.render('attorney_detail', { teamMember, error: null });
+      res.render('attorney_detail', { teamMember, error: null, success: null });
     } catch (err) {
       console.error('Error fetching attorney:', err);
-      res.render('attorney_detail', { teamMember: null, error: 'Failed to load attorney' });
+      res.render('attorney_detail', { teamMember: null, error: 'Failed to load attorney', success: null });
     }
   });
 
@@ -465,61 +556,70 @@ async function startServer() {
   app.get('/practice-areas', async (req, res) => {
     try {
       const practiceAreas = await db.collection('practiceAreas').find().toArray();
-      res.render('practice_areas', { practiceAreas, error: null });
+      res.render('practice_areas', { practiceAreas, error: null, success: null });
     } catch (err) {
       console.error('Error fetching practice areas:', err);
-      res.render('practice_areas', { practiceAreas: [], error: 'Failed to load practice areas' });
+      res.render('practice_areas', { practiceAreas: [], error: 'Failed to load practice areas', success: null });
     }
   });
 
   app.get('/newsletters', async (req, res) => {
     try {
       const newsletters = await db.collection('newsletters').find().toArray();
-      res.render('newsletters', { newsletters, error: null });
+      console.log('Newsletters fetched for /newsletters:', newsletters.map(n => ({ title: n.title, fileId: n.fileId })));
+      res.render('newsletters', { newsletters, error: null, success: null });
     } catch (err) {
       console.error('Error fetching newsletters:', err);
-      res.render('newsletters', { newsletters: [], error: 'Failed to load newsletters' });
+      res.render('newsletters', { newsletters: [], error: 'Failed to load newsletters', success: null });
     }
   });
 
   app.get('/admin/events', requireLogin, async (req, res) => {
     try {
       const events = await db.collection('events').find().toArray();
-      res.render('admin_events', { events, error: null });
+      console.log('Events fetched for /admin/events:', events.map(e => ({ title: e.title, photoId: e.photoId, additionalPhotoIds: e.additionalPhotoIds })));
+      res.render('admin_events', { events, error: null, success: null });
     } catch (err) {
       console.error('Error fetching events:', err);
-      res.render('admin_events', { events: [], error: 'Failed to load events' });
+      res.render('admin_events', { events: [], error: 'Failed to load events', success: null });
     }
   });
 
-  app.post('/admin/events', requireLogin, upload.fields([
-    { name: 'photo', maxCount: 1 },
-    { name: 'additionalPhotos', maxCount: 10 }
-  ]), async (req, res) => {
+  app.post('/admin/events', requireLogin, upload.any(), async (req, res) => {
     const { title, date, description, photoCaptions } = req.body;
-    console.log('Event upload attempt:', { title, date, description, photo: req.files.photo, additionalPhotos: req.files.additionalPhotos });
+    console.log('Event upload attempt:', {
+      title,
+      date,
+      description,
+      photo: req.files.find(f => f.fieldname === 'photo') ? req.files.find(f => f.fieldname === 'photo').originalname : null,
+      additionalPhotos: req.files.filter(f => f.fieldname === 'additionalPhotos').map(f => f.originalname),
+      receivedFields: Object.keys(req.body).concat(req.files.map(f => f.fieldname))
+    });
     try {
       let photoId = null;
       let additionalPhotoIds = [];
       const captionsArray = photoCaptions ? photoCaptions.split(',').map(c => c.trim()) : [];
 
-      if (req.files.photo) {
-        const uploadStream = bucket.openUploadStream(req.files.photo[0].originalname, {
-          contentType: req.files.photo[0].mimetype
+      const photoFile = req.files.find(f => f.fieldname === 'photo');
+      if (photoFile) {
+        const uploadStream = bucket.openUploadStream(photoFile.originalname, {
+          contentType: photoFile.mimetype
         });
         await new Promise((resolve, reject) => {
-          uploadStream.end(req.files.photo[0].buffer, (err) => {
+          uploadStream.end(photoFile.buffer, (err) => {
             if (err) reject(err);
             else {
               photoId = uploadStream.id;
+              console.log('Uploaded cover photo with ID:', photoId.toString());
               resolve();
             }
           });
         });
       }
 
-      if (req.files.additionalPhotos) {
-        for (const file of req.files.additionalPhotos) {
+      const additionalPhotos = req.files.filter(f => f.fieldname === 'additionalPhotos');
+      if (additionalPhotos.length > 0) {
+        for (const file of additionalPhotos) {
           const uploadStream = bucket.openUploadStream(file.originalname, {
             contentType: file.mimetype
           });
@@ -527,7 +627,9 @@ async function startServer() {
             uploadStream.end(file.buffer, (err) => {
               if (err) reject(err);
               else {
-                additionalPhotoIds.push(uploadStream.id.toString());
+                const photoIdStr = uploadStream.id.toString();
+                additionalPhotoIds.push(photoIdStr);
+                console.log('Uploaded additional photo with ID:', photoIdStr);
                 resolve();
               }
             });
@@ -543,12 +645,14 @@ async function startServer() {
         additionalPhotoIds: additionalPhotoIds,
         photoCaptions: captionsArray
       });
+      console.log('Saved event with photoId:', photoId ? photoId.toString() : null, 'additionalPhotoIds:', additionalPhotoIds);
       res.redirect('/admin/events');
     } catch (err) {
       console.error('Error saving event:', err);
       res.render('admin_events', {
         events: await db.collection('events').find().toArray(),
-        error: 'Failed to save event. Try again.'
+        error: 'Failed to save event. Try again.',
+        success: null
       });
     }
   });
@@ -559,17 +663,17 @@ async function startServer() {
       console.log('Request ID for /events/:id:', id);
       if (!ObjectId.isValid(id)) {
         console.log('Invalid ObjectId:', id);
-        return res.render('event_detail', { event: null, error: 'Invalid event ID' });
+        return res.render('event_detail', { event: null, error: 'Invalid event ID', success: null });
       }
       const event = await db.collection('events').findOne({ _id: new ObjectId(id) });
       console.log('Found event:', event);
       if (!event) {
-        return res.render('event_detail', { event: null, error: 'Event not found' });
+        return res.render('event_detail', { event: null, error: 'Event not found', success: null });
       }
-      res.render('event_detail', { event, error: null });
+      res.render('event_detail', { event, error: null, success: null });
     } catch (err) {
       console.error('Error fetching event:', err);
-      res.render('event_detail', { event: null, error: 'Failed to load event' });
+      res.render('event_detail', { event: null, error: 'Failed to load event', success: null });
     }
   });
 
@@ -581,12 +685,14 @@ async function startServer() {
       }
       const event = await db.collection('events').findOne({ _id: new ObjectId(id) });
       if (event) {
-        if (event.photoId) {
+        if (event.photoId && ObjectId.isValid(event.photoId)) {
           await bucket.delete(new ObjectId(event.photoId));
         }
         if (event.additionalPhotoIds && event.additionalPhotoIds.length > 0) {
           for (const photoId of event.additionalPhotoIds) {
-            await bucket.delete(new ObjectId(photoId));
+            if (ObjectId.isValid(photoId)) {
+              await bucket.delete(new ObjectId(photoId));
+            }
           }
         }
       }
@@ -596,7 +702,8 @@ async function startServer() {
       console.error('Error deleting event:', err);
       res.render('admin_events', {
         events: await db.collection('events').find().toArray(),
-        error: 'Failed to delete event'
+        error: 'Failed to delete event',
+        success: null
       });
     }
   });
@@ -604,20 +711,21 @@ async function startServer() {
   app.get('/events', async (req, res) => {
     try {
       const events = await db.collection('events').find().toArray();
-      res.render('events', { events, error: null });
+      console.log('Events fetched for /events:', events.map(e => ({ title: e.title, photoId: e.photoId, additionalPhotoIds: e.additionalPhotoIds })));
+      res.render('events', { events, error: null, success: null });
     } catch (err) {
       console.error('Error fetching events:', err);
-      res.render('events', { events: [], error: 'Failed to load events' });
+      res.render('events', { events: [], error: 'Failed to load events', success: null });
     }
   });
 
   app.get('/admin/notices', requireLogin, async (req, res) => {
     try {
       const notices = await db.collection('notices').find().toArray();
-      res.render('admin_notices', { notices, error: null });
+      res.render('admin_notices', { notices, error: null, success: null });
     } catch (err) {
       console.error('Error fetching notices:', err);
-      res.render('admin_notices', { notices: [], error: 'Failed to load notices' });
+      res.render('admin_notices', { notices: [], error: 'Failed to load notices', success: null });
     }
   });
 
@@ -635,7 +743,8 @@ async function startServer() {
       console.error('Error saving notice:', err);
       res.render('admin_notices', {
         notices: await db.collection('notices').find().toArray(),
-        error: 'Failed to save notice'
+        error: 'Failed to save notice',
+        success: null
       });
     }
   });
@@ -648,7 +757,8 @@ async function startServer() {
       console.error('Error deleting notice:', err);
       res.render('admin_notices', {
         notices: await db.collection('notices').find().toArray(),
-        error: 'Failed to delete notice'
+        error: 'Failed to delete notice',
+        success: null
       });
     }
   });

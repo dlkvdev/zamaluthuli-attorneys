@@ -1,46 +1,137 @@
-<!-- views/event_detail.ejs (no changes needed, but confirmed) -->
+
+
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event Details</title>
+  <title>Event Detail</title>
+  <!-- Bootstrap 5 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <style>
+    /* Consistent image sizing */
+    .event-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+    .event-image:hover {
+      transform: scale(1.05);
+    }
+    .cover-image-container {
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+    /* Modal image styling */
+    .modal-image {
+      max-width: 90%;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+    /* Ensure backdrop doesn't persist */
+    .modal-backdrop {
+      z-index: 1040 !important;
+    }
+    .modal {
+      z-index: 1055 !important;
+    }
+  </style>
 </head>
-<body>
-   <%- include('partials/header') %>
-  <div class="container mt-4">
-    <% if (event) { %>
-      <h1><%= event.title %></h1>
-      <% if (event.photoPath) { %>
-        <img src="<%= event.photoPath %>" alt="<%= event.title %>" class="img-fluid mb-3">
-      <% } %>
-      <p><strong>Date:</strong> <%= event.date %></p>
-      <p><strong>Description:</strong> <%= event.description %></p>
+<body class="bg-light">
+  <header class="bg-primary text-white py-4">
+    <!-- Header content -->
+     <%- include('partials/header') %>
+  </header>
 
-      <% if (event.additionalPhotoPaths && event.additionalPhotoPaths.length > 0) { %>
-        <h2>Gallery</h2>
-        <div class="row">
-          <% event.additionalPhotoPaths.forEach((photo, index) => { %>
-            <div class="col-md-4 mb-3">
-              <img src="<%= photo %>" alt="Gallery Photo <%= index + 1 %>" class="img-fluid">
-              <% if (event.photoCaptions && event.photoCaptions[index]) { %>
-                <p class="text-center"><%= event.photoCaptions[index] %></p>
-              <% } %>
+  <main class="container py-5">
+    <% if (event) { %>
+      <h2 class="text-center mb-4"><%= event.title %></h2>
+      <p class="fs-5 mb-2"><strong>Date:</strong> <%= event.date %></p>
+      <p class="fs-5 mb-4"><strong>Description:</strong> <%= event.description %></p>
+
+      <% if (event.photoId) { %>
+        <div class="cover-image-container mx-auto">
+          <img src="/file/<%= event.photoId %>" alt="<%= event.title %> Cover" class="event-image img-fluid rounded" onclick="openModal('/file/<%= event.photoId %>')">
+        </div>
+      <% } %>
+
+      <% if (event.additionalPhotoIds && event.additionalPhotoIds.length > 0) { %>
+        <h3 class="text-center mb-4">Gallery</h3>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+          <% event.additionalPhotoIds.forEach((photoId, index) => { %>
+            <div class="col">
+              <div class="card h-100">
+                <img src="/file/<%= photoId %>" alt="Additional Photo <%= index + 1 %>" class="event-image card-img-top" onclick="openModal('/file/<%= photoId %>')">
+                <% if (event.photoCaptions && event.photoCaptions[index]) { %>
+                  <div class="card-body">
+                    <p class="card-text text-center"><%= event.photoCaptions[index] %></p>
+                  </div>
+                <% } %>
+              </div>
             </div>
           <% }) %>
         </div>
       <% } %>
     <% } else { %>
-      <h1>Event Not Found</h1>
-      <p>The requested event could not be found.</p>
+      <h2 class="text-center text-danger">Event Not Found</h2>
+      <p class="text-center fs-5">The requested event could not be found.</p>
     <% } %>
 
-    <a href="/events" class="btn btn-secondary">Back to Events</a>
+    <div class="text-center mt-5">
+      <a href="/events" class="btn btn-primary">Back to Events</a>
+    </div>
+  </main>
+
+  <!-- Modal for zooming images -->
+  <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content bg-transparent border-0">
+        <div class="modal-body p-0 d-flex justify-content-center align-items-center">
+          <img id="modalImage" src="" alt="Zoomed Image" class="modal-image">
+        </div>
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+    </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <footer class="bg-primary text-white py-4 mt-5">
    <%- include('partials/footer') %>
+  </footer>
+
+  <!-- Bootstrap 5 JS Bundle CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script>
+    // Store single modal instance
+    let modalInstance = null;
+
+    function openModal(imageSrc) {
+      // If modal exists, hide it first to prevent multiple backdrops
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+      // Create or reuse modal
+      modalInstance = new bootstrap.Modal(document.getElementById('imageModal'), {
+        backdrop: true,
+        keyboard: true
+      });
+      const modalImage = document.getElementById('modalImage');
+      modalImage.src = imageSrc;
+      modalInstance.show();
+
+      // Ensure backdrop is removed when modal is hidden
+      document.getElementById('imageModal').addEventListener('hidden.bs.modal', function () {
+        document.body.classList.remove('modal-open');
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+        modalInstance = null; // Reset instance
+      }, { once: true }); // Run only once per modal close
+    }
+  </script>
 </body>
 </html>
+
+
+

@@ -1,90 +1,75 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attorney Details - Zama Luthuli Attorneys</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <title>Our Team</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" type="image/x-icon" href="/MEDIA/backend/favicon.png">
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-    body {
-      background-image: url('/MEDIA/wallpaper.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      display: flex;
-      flex-direction: column;
-      font-family: 'Roboto', sans-serif;
-    }
-    .content {
-      flex: 1 0 auto;
-      background: rgba(236, 240, 241, 0.95);
-      margin: 2rem auto;
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 800px;
-    }
-    .btn-primary {
-      background-color: #004aad;
-      border-color: #004aad;
-    }
-    .btn-primary:hover {
-      background-color: #003780;
-      border-color: #003780;
-    }
-    .btn-secondary {
-      background-color: #6c757d;
-      border-color: #6c757d;
-    }
-    .btn-secondary:hover {
-      background-color: #5a6268;
-      border-color: #5a6268;
-    }
-    .img-fluid {
+    .profile-photo {
       max-width: 200px;
-      border-radius: 10px;
+      height: auto;
+      border-radius: 10%;
+      object-fit: cover;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    h1 {
-      color: #00d1b2;
+    .attorney-detail {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
     }
-    p {
-      color: #333;
+    .attorney-detail p {
+      margin: 10px 0;
+    }
+    .biography {
+      text-align: justify;
+      margin: 15px 0;
+    }
+    .biography ul {
+      list-style-type: disc;
+      padding-left: 20px;
+      text-align: justify;
+    }
+    .attorney-detail a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .attorney-detail a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-<%- include('partials/header') %>
-
-<% if (teamMember) { %>
-  <div class="attorney-detail">
-    <div class="attorney-image">
+    <!-- Header -->
+  <%- include('partials/header') %>
+  <% if (teamMember) { %>
+    <div class="attorney-detail">
       <% if (teamMember.photoId) { %>
-        <img src="/file/<%= teamMember.photoId %>" alt="<%= teamMember.name %>">
-      <% } else { %>
-        <img src="/MEDIA/placeholder.jpg" alt="Placeholder">
+        <img src="/file/<%= teamMember.photoId %>" alt="<%= teamMember.name %>'s Photo" class="profile-photo">
       <% } %>
-    </div>
-    <div class="attorney-info">
       <h1><%= teamMember.name %></h1>
-      <p><strong>Position:</strong> <%= teamMember.position %></p>
-      <p><strong>Qualifications:</strong> <%= teamMember.qualifications %></p>
-      <p><strong>Biography:</strong> <%= teamMember.biography %></p>
-      <p><strong>Email:</strong> <a href="mailto:<%= teamMember.email %>"><%= teamMember.email %></a></p>
-      <p><strong>Contact Number:</strong> <%= teamMember.contactNumber %></p>
-      <a href="/contact">Contact This Attorney</a>
+      <p>Position: <%= teamMember.position %></p>
+      <p>Qualifications: <%- teamMember.qualifications %></p>
+      <p class="biography">Biography: <%- teamMember.biography %></p>
+      <p>Email: <%= teamMember.email %></p>
+      <p>Contact Number: <%= teamMember.contactNumber %></p>
+      <a href="mailto:<%= teamMember.email %>" class="btn btn-primary" style="color:black">Contact This Attorney</a>
+      <br>
+      <br>
+      <p><a href="/team" class="btn btn-secondary" style="color:blacks">Back to Team</a></p>
     </div>
-  </div>
-<% } else { %>
-  <h1>Attorney Not Found</h1>
-  <p>Attorney not found.</p>
-<% } %>
+  <% } else { %>
+    <h1>Attorney Not Found</h1>
+    <p>Attorney not found.</p>
+  <% } %>
 
-<a href="/team">Back to Team</a>
-
-<%- include('partials/footer') %>  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  
+  <%- include('partials/footer') %>
 </body>
 </html>
+
