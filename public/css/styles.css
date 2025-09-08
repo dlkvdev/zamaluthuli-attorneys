@@ -222,3 +222,73 @@ footer a:hover {
   border: 1px solid #ffecb5;
   border-radius: 5px;
 }
+
+.contact-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.contact-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+.contact-details, .contact-form {
+  flex: 1;
+  min-width: 300px;
+}
+.contact-details h2, .contact-form h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+.contact-form .form-group {
+  margin-bottom: 20px;
+}
+.contact-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+.contact-form input, .contact-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+.contact-form textarea {
+  resize: vertical;
+}
+.contact-form button {
+  background-color: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.contact-form button:hover {
+  background-color: #34495e;
+}
+.contact-form .error {
+  color: red;
+  margin-bottom: 10px;
+}
+.contact-form .success {
+  color: green;
+  margin-bottom: 10px;
+}
+.contact-location {
+  text-align: center;
+}
+.contact-location iframe {
+  width: 100%;
+  max-width: 600px;
+  height: 450px;
+}
+
+.g-recaptcha {
+  margin-bottom: 20px;
+}

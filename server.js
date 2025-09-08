@@ -11,18 +11,31 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 const MongoStore = require('connect-mongo');
+const nodemailer = require('nodemailer');
+const axios = require('axios');
 const app = express();
 
 let db;
 let bucket; // GridFS bucket for file storage
 
-// Multer setup for file uploads (memory storage for GridFS) - Temporary for debugging
+// Multer setup for file uploads (memory storage for GridFS)
 const storage = multer.memoryStorage();
-const upload = multer({ storage }); // Allow all fields for debugging
+const upload = multer({ storage });
+
+// Nodemailer setup with debug logging
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  debug: true, // Enable debug output
+  logger: true // Log to console
+});
 
 // Middleware
 app.set('view engine', 'ejs');
-app.use('/uploads', express.static('public/uploads'));
+app.use('/Uploads', express.static('public/uploads'));
 app.use('/MEDIA', express.static('public/MEDIA'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -171,6 +184,40 @@ app.get('/test-flash', (req, res) => {
   console.log('Testing flash message');
   req.flash('error', 'Test flash message');
   res.redirect('/login');
+});
+
+// Contact form submission route
+app.post('/contact', async (req, res) => {
+  const { name, email, message, 'g-recaptcha-response': recaptchaResponse } = req.body;
+  console.log('Contact form submission:', { name, email, message, recaptchaResponse });
+  try {
+    // Verify reCAPTCHA
+    const recaptchaVerification = await axios.post('https://www.google.com/recaptcha/api/siteverify', null, {
+      params: {
+        secret: process.env.RECAPTCHA_SECRET_KEY,
+        response: recaptchaResponse
+      }
+    });
+    if (!recaptchaVerification.data.success) {
+      throw new Error('reCAPTCHA verification failed');
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: 'admin@zluthuliattorneys.co.za',
+      replyTo: email,
+      subject: `New Contact Form Submission from ${name}`,
+      text: `Name: ${sanitizeHtml(name)}\nEmail: ${sanitizeHtml(email)}\nMessage: ${sanitizeHtml(message)}`
+    };
+    await transporter.sendMail(mailOptions);
+    console.log('Contact email sent successfully');
+    req.flash('success', 'Your message has been sent successfully!');
+    res.redirect('/contact');
+  } catch (err) {
+    console.error('Error sending contact email:', err);
+    req.flash('error', err.message === 'reCAPTCHA verification failed' ? 'Please complete the reCAPTCHA verification.' : 'Failed to send message. Please try again.');
+    res.redirect('/contact');
+  }
 });
 
 // Start server and define routes
@@ -517,7 +564,9 @@ async function startServer() {
 
   // Contact route
   app.get('/contact', (req, res) => {
-    res.render('contact', { error: null, success: null });
+    const error = req.flash('error') || null;
+    const success = req.flash('success') || null;
+    res.render('contact', { error, success });
   });
 
   // Team route
@@ -764,7 +813,7 @@ async function startServer() {
   });
 
   // Start server
-  const PORT = process.env.PORT || 10000;
+  const PORT = process.env.PORT || 3000;
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
   });
