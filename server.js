@@ -1,4 +1,11 @@
 require('dotenv').config();
+console.log('Environment variables:', {
+  RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
+  RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
+  EMAIL_USER: process.env.EMAIL_USER,
+  EMAIL_PASS: process.env.EMAIL_PASS ? '[REDACTED]' : undefined,
+  MONGODB_URI: process.env.MONGODB_URI
+});
 const express = require('express');
 const { MongoClient, ObjectId, GridFSBucket } = require('mongodb');
 const sanitizeHtml = require('sanitize-html');
@@ -198,8 +205,9 @@ app.post('/contact', async (req, res) => {
         response: recaptchaResponse
       }
     });
+    console.log('reCAPTCHA verification response:', recaptchaVerification.data);
     if (!recaptchaVerification.data.success) {
-      throw new Error('reCAPTCHA verification failed');
+      throw new Error(`reCAPTCHA verification failed: ${JSON.stringify(recaptchaVerification.data)}`);
     }
 
     const mailOptions = {
@@ -215,10 +223,12 @@ app.post('/contact', async (req, res) => {
     res.redirect('/contact');
   } catch (err) {
     console.error('Error sending contact email:', err);
-    req.flash('error', err.message === 'reCAPTCHA verification failed' ? 'Please complete the reCAPTCHA verification.' : 'Failed to send message. Please try again.');
+    req.flash('error', err.message.startsWith('reCAPTCHA verification failed') ? 'Please complete the reCAPTCHA verification.' : 'Failed to send message. Please try again.');
     res.redirect('/contact');
   }
 });
+
+
 
 // Start server and define routes
 async function startServer() {
@@ -566,7 +576,12 @@ async function startServer() {
   app.get('/contact', (req, res) => {
     const error = req.flash('error') || null;
     const success = req.flash('success') || null;
-    res.render('contact', { error, success });
+    res.render('contact', {
+      error,
+      success,
+      recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
+      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+    });
   });
 
   // Team route
@@ -579,6 +594,7 @@ async function startServer() {
       res.render('team', { teamMembers: [], error: 'Failed to load team members', success: null });
     }
   });
+  
 
   // Attorney detail route
   app.get('/team/:id', async (req, res) => {
