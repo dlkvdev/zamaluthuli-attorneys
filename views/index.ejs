@@ -8,6 +8,12 @@
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="icon" type="image/x-icon" href="/MEDIA/backend/favicon.png">
   <style>
+
+    body{
+      background-color:#E5E4E2;
+    }
+
+    
     .carousel-inner img {
       height: 400px;
       object-fit: cover;
@@ -19,10 +25,13 @@
     padding: 20px; /* Add some padding for better readability */
     }
 
-    p {
-      text-align: justify;
+    .paragraph{
+      text-align:justify;
     }
-    
+
+
+
+   
     @media (max-width: 768px) {
       .carousel-inner img {
         height: 400px;
@@ -154,14 +163,14 @@
       <span class="visually-hidden">Next</span>
     </button>
   </div>
-
+  <br>
   <!-- Main Content -->
   <div class="container">
     <h2>Who we are</h2>
-    <p>Zama Luthuli Attorneys Inc. is a female-owned boutique law firm based in Durban. We are dedicated to delivering excellent legal solutions to everyone with due diligence and respect. We offer a wide range of legal services as requested by our clients. We have a highly skilled team fully equipped to negotiate and litigate complex legal matters. Our culture is built on trust, transparency, and tenacity.</p>
+    <p class="paragraph">Zama Luthuli Attorneys Inc. is a female-owned boutique law firm based in Durban. We are dedicated to delivering excellent legal solutions to everyone with due diligence and respect. We offer a wide range of legal services as requested by our clients. We have a highly skilled team fully equipped to negotiate and litigate complex legal matters. Our culture is built on trust, transparency, and tenacity.</p>
         
     <h2>Our Mission</h2>
-    <p>Our mission is to deliver exceptional legal representation with a client-centered approach. We strive to uphold the highest standards of professionalism, ensuring that every client receives tailored advice and robust support.</p>
+    <p class="paragraph">Our mission is to deliver exceptional legal representation with a client-centered approach. We strive to uphold the highest standards of professionalism, ensuring that every client receives tailored advice and robust support.</p>
     
     <h2>Public Notices</h2>
     <% if (error) { %>
