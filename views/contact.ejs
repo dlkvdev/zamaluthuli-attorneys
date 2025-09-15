@@ -148,6 +148,7 @@
     document.querySelector('form').addEventListener('submit', function (e) {
       const recaptchaResponse = grecaptcha.getResponse();
       if (!recaptchaResponse) {
+
         e.preventDefault();
         alert('Please complete the reCAPTCHA verification.');
       }
