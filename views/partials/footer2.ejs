@@ -1,0 +1,101 @@
+<footer class="text-center py-4 bg-dark text-white">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    .content {
+      flex: 1 0 auto; /* Ensures content takes available space */
+    }
+    footer {
+      flex-shrink: 0; /* Prevents footer from shrinking */
+      background-color: #1c2526;
+      padding: 2rem 0;
+    }
+    .logo-container img {
+      max-height: 50px;
+      transition: transform 0.2s;
+    }
+    .logo-container img:hover {
+      transform: scale(1.1);
+    }
+    .footer-links a {
+      color: #e0e0e0;
+      text-decoration: none;
+      margin: 0 1rem;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover {
+      color: #00d1b2; /* Matches dashboard hover color */
+    }
+    .text-whitesmoke {
+      color: #e0e0e0 !important;
+    }
+    .social-icons {
+      margin-top: 1rem;
+    }
+    .social-icons a {
+      margin: 0 0.5rem;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .social-icons img {
+      width: 24px; /* Adjust size as needed */
+      height: 24px;
+      filter: brightness(0) invert(1); /* Ensures visibility on dark background */
+      transition: filter 0.2s;
+    }
+    .social-icons a:hover img {
+      filter: brightness(0) invert(1) hue-rotate(160deg); /* Matches #00d1b2 hover effect */
+    }
+    @media (max-width: 576px) {
+      .footer-links a {
+        display: block;
+        margin: 0.5rem 0;
+      }
+      .social-icons a {
+        margin: 0.5rem;
+      }
+    }
+  </style>
+  <div class="container">
+    <div class="logo-container mb-3">
+      <img src="/MEDIA/Logos/zllogo.png" alt="Zama Luthuli Attorneys Logo">
+    </div>
+    <p class="text-whitesmoke mb-2">© <%= new Date().getFullYear() %> Zama Luthuli Attorneys. All rights reserved.</p>
+    <div class="footer-links">
+      <a href="/contact" class="text-whitesmoke">Contact Us</a>
+      <a href="/privacy-policy" class="text-whitesmoke">Privacy Policy</a>
+      <a href="/terms-of-service" class="text-whitesmoke">Terms of Service</a>
+    </div>
+    <p class="text-whitesmoke mt-2">Email: admin@zluthuliattorneys.co.za</p>
+    <p class="text-whitesmoke mt-2">Phone: +27 31 007 6257</p>
+    <div class="social-icons">
+      <a href="https://www.facebook.com" target="_blank" aria-label="Facebook">
+        <img src="/MEDIA/Icons/facebook1.png" alt="Facebook">
+      </a>
+      <a href="https://www.twitter.com" target="_blank" aria-label="Twitter">
+        <img src="/MEDIA/Icons/x1.png" alt="Twitter">
+      </a>
+      <a href="https://www.linkedin.com/company/zama-luthuli-attorneys/posts/?feedView=all" target="_blank"     aria-label="LinkedIn">
+        <img src="/MEDIA/Icons/linkedin1.png" alt="LinkedIn">
+      </a>
+      <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
+        <img src="/MEDIA/Icons/instagram1.png" alt="Instagram">
+      </a>
+      <a href="https://wa.me/27671738817" target="_blank" aria-label="WhatsApp">
+        <img src="/MEDIA/Icons/whatsapp.png" alt="WhatsApp">
+      </a>
+    </div>
+    <br>
+    <div class="logo-container mb-3">
+      <a href="https://martinmngadi.com/" target="_blank">
+        <img src="/MEDIA/Logos/dlkv-whitesmoke-nobg.png" alt="dlkv Logo">
+      </a>
+    </div>
+  </div>
+</footer>
