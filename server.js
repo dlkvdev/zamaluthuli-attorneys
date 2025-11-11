@@ -828,6 +828,8 @@ async function startServer() {
     }
   });
 
+  app.locals.googleMapsKey = process.env.GOOGLE_MAPS_API_KEY;
+
   // Start server
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, '0.0.0.0', () => {
